@@ -1,36 +1,36 @@
 {
   "expo": {
-    "name": "VemComigo",
-    "slug": "VemComigo",
+    "name": "expo-integrador",
+    "slug": "expo-integrador",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./src/assets/images/icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "icon": "./src/assets/images/icon.png",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/images/logo.png",
+        "foregroundImage": "./src/assets/images/funcionapfv.png",
         "backgroundColor": "#0077b6"
       },
-      "package": "com.anonymous.VemComigo"
+      "package": "com.anonymous.expointegrador"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./src/assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./src/assets/images/logo.png",
+          "image": "./src/assets/images/funcionapfv.png",
           "imageWidth": 200,
-          "resizeMode": "native",
+          "resizeMode": "contain",
           "backgroundColor": "#0077b6"
         }
       ],
