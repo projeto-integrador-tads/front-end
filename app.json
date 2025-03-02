@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "VemComigo",
-    "slug": "VemComigo",
+    "slug": "vem-comigo-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "myapp",
@@ -29,7 +29,7 @@
         "expo-splash-screen",
         {
           "image": "./src/assets/images/logo.png",
-          "imageWidth": 200,
+          "imageWidth": 150,
           "resizeMode": "native",
           "backgroundColor": "#0077b6"
         }
@@ -38,6 +38,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "d6475886-60b8-41d8-a44d-b64eb57281c5"
+      }
+    },
+    "owner": "afraniomcaires"
   }
 }
