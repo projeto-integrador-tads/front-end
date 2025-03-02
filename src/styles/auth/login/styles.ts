@@ -45,6 +45,20 @@ export const styles = StyleSheet.create({
     color: colors.primary.normal.default,
     textAlign: "right",
   },
+  signupContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
+    gap: 4,
+  },
+  signupText: {
+    color: colors.neutral.gray2,
+  },
+  signupLink: {
+    color: colors.primary.normal.default,
+    fontWeight: '600',
+  },
 });
 
 export default styles; 

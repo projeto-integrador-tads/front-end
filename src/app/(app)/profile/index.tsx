@@ -5,12 +5,18 @@ import { typography } from "@/styles/shared/typography/typography";
 import { styles } from "@/styles/app/styles";
 import { useRouter } from "expo-router";
 import { Button } from "@/components/button/Button";
+import { useUser } from "@/contexts/UserContext";
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { signOut } = useUser();
 
-  const handleLogout = () => {
-    router.replace("/(auth)/login");
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
   };
 
   return (
@@ -33,4 +39,4 @@ export default function ProfileScreen() {
       </ScrollView>
     </SafeAreaView>
   );
-} 
+}

@@ -6,6 +6,7 @@ import {
   ScrollView,
   Platform,
   Pressable,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Input } from "@/components/input/Input";
@@ -27,6 +28,8 @@ import { z } from "zod";
 import { useRouter } from "expo-router";
 import LogoSvg from "@/assets/svgs/logo";
 import { styles } from "@/styles/auth/signup/styles";
+import { userService } from "@/services/api/user";
+import { useUser } from "@/contexts/UserContext";
 
 const signupSchema = z
   .object({
@@ -56,7 +59,9 @@ type SignUpFormData = z.infer<typeof signupSchema>;
 export default function SignUpScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { signIn } = useUser();
 
   const {
     control,
@@ -79,8 +84,26 @@ export default function SignUpScreen() {
   const password = watch("password");
   const confirmPassword = watch("confirmPassword");
 
-  const onSubmit = (data: SignUpFormData) => {
-    console.log(data);
+  const onSubmit = async (data: SignUpFormData) => {
+    try {
+      setIsLoading(true);
+      await userService.register({
+        email: data.email,
+        password: data.password,
+        name: data.firstName,
+        last_name: data.lastName,
+        phone_number: data.phoneNumber || undefined,
+      });
+
+      await signIn(data.email, data.password);
+    } catch (error: any) {
+      Alert.alert(
+        "Erro ao criar conta",
+        error.response?.data?.message || "Ocorreu um erro ao criar sua conta"
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const RequiredMark = () => <Text style={styles.requiredMark}>*</Text>;
@@ -282,10 +305,12 @@ export default function SignUpScreen() {
               )}
             />
 
-            <Button onPress={handleSubmit(onSubmit)}>Continuar</Button>
+            <Button onPress={handleSubmit(onSubmit)} disabled={isLoading}>
+              {isLoading ? "Criando conta..." : "Criar conta"}
+            </Button>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
-} 
+}

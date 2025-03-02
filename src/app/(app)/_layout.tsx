@@ -1,4 +1,6 @@
-import { Tabs } from "expo-router";
+import { useEffect } from 'react';
+import { Redirect, Tabs } from 'expo-router';
+import { useUser } from '@/contexts/UserContext';
 import { colors } from "@/styles/shared/colors/colors";
 import {
   IconHome,
@@ -9,6 +11,13 @@ import {
 } from "@tabler/icons-react-native";
 
 export default function AppLayout() {
+  const { user, loading } = useUser();
+
+  // If the user is not logged in, redirect to the login page
+  if (!loading && !user) {
+    return <Redirect href="/login" />;
+  }
+
   return (
     <Tabs
       screenOptions={{

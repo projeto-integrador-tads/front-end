@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Input } from "@/components/input/Input";
 import { Button } from "@/components/button/Button";
+import { Dialog } from "@/components/dialog/Dialog";
 import {
   IconLock,
   IconEye,
@@ -23,12 +24,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Link, useRouter } from "expo-router";
 import { styles } from "@/styles/auth/login/styles";
+import { useUser } from "@/contexts/UserContext";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Email é obrigatório").email("Email inválido"),
   password: z
     .string()
-    .min(6, "Senha deve ter no mínimo 6 caracteres")
+    .min(6, "Senha deve ter no mínimo 8 caracteres")
     .max(50, "Senha muito longa"),
 });
 
@@ -36,6 +38,12 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorDialog, setErrorDialog] = useState({
+    visible: false,
+    message: "",
+  });
+  const { signIn } = useUser();
   const router = useRouter();
 
   const {
@@ -50,9 +58,21 @@ export default function LoginScreen() {
     },
   });
 
-  const onSubmit = (data: LoginFormData) => {
-    console.log(data);
-    router.replace("/(app)");
+  const onSubmit = async (data: LoginFormData) => {
+    try {
+      setIsLoading(true);
+      await signIn(data.email, data.password);
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.error || "Ocorreu um erro ao fazer login";
+      console.error("Login error:", error);
+      setErrorDialog({
+        visible: true,
+        message: errorMessage,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -137,10 +157,33 @@ export default function LoginScreen() {
               </Pressable>
             </Link>
 
-            <Button onPress={handleSubmit(onSubmit)}>Login</Button>
+            <Button onPress={handleSubmit(onSubmit)} disabled={isLoading}>
+              {isLoading ? "Carregando..." : "Login"}
+            </Button>
+
+            <View style={styles.signupContainer}>
+              <Text style={[typography.body2, styles.signupText]}>
+                Não tem uma conta?
+              </Text>
+              <Link href="/signup" asChild>
+                <Pressable>
+                  <Text style={[typography.body2, styles.signupLink]}>
+                    Criar conta
+                  </Text>
+                </Pressable>
+              </Link>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Dialog
+        visible={errorDialog.visible}
+        title="Erro ao fazer login"
+        message={errorDialog.message}
+        type="error"
+        onClose={() => setErrorDialog({ visible: false, message: "" })}
+      />
     </View>
   );
 }

@@ -1,21 +1,17 @@
-import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import { View } from "react-native";
-import { colors } from "@/styles/shared/colors/colors";
+import { Stack, Redirect } from "expo-router";
+import { useUser } from "@/contexts/UserContext";
 
 export default function AuthLayout() {
+  const { user, loading } = useUser();
+
+  if (!loading && user) {
+    return <Redirect href="/(app)" />;
+  }
+
   return (
-    <View style={{ flex: 1 }}>
-      <StatusBar style="dark" backgroundColor={colors.neutral.white} />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: {
-            backgroundColor: colors.neutral.white,
-          },
-          animation: "fade",
-        }}
-      />
-    </View>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="login" />
+      <Stack.Screen name="register" />
+    </Stack>
   );
-} 
+}
