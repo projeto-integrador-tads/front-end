@@ -22,7 +22,8 @@ export const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 24,
+    paddingHorizontal: 24,
+    paddingTop: 24,
   },
   section: {
     marginBottom: 32,
@@ -32,14 +33,18 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 16,
+    gap: 8,
   },
   sectionTitle: {
     color: colors.neutral.black,
+    flex: 1,
+    fontSize: 18,
   },
   seeMoreButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    paddingLeft: 8,
   },
   seeMoreText: {
     color: colors.primary.normal.default,
@@ -55,11 +60,9 @@ export const styles = StyleSheet.create({
   cardHeader: {
     padding: 16,
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.primary.light.default,
-    flexWrap: 'wrap',
-    gap: 8,
+    alignItems: 'center',
+    marginBottom: 16,
   },
   routeContainer: {
     flexDirection: 'row',
@@ -76,9 +79,10 @@ export const styles = StyleSheet.create({
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 16,
-    alignSelf: 'flex-start',
+    borderRadius: 4,
     backgroundColor: colors.neutral.white,
+    borderWidth: 1,
+    borderColor: colors.neutral.gray4,
   },
   cardContent: {
     padding: 16,
@@ -147,9 +151,81 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  skeletonCard: {
-    height: 120,
+  skeletonBase: {
     backgroundColor: colors.neutral.gray4,
+    borderRadius: 8,
+  },
+  skeletonCard: {
+    backgroundColor: colors.neutral.white,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.neutral.gray4,
+    padding: 16,
+    gap: 16,
+  },
+  skeletonHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  skeletonRoute: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  skeletonCity: {
+    height: 20,
+    width: 80,
+    backgroundColor: colors.neutral.gray4,
+    borderRadius: 4,
+  },
+  skeletonStatus: {
+    height: 20,
+    width: 60,
+    backgroundColor: colors.neutral.gray4,
+    borderRadius: 4,
+  },
+  skeletonInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  skeletonInfoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  skeletonText: {
+    height: 16,
+    width: 60,
+    backgroundColor: colors.neutral.gray4,
+    borderRadius: 4,
+  },
+  skeletonIcon: {
+    width: 16,
+    height: 16,
+    backgroundColor: colors.neutral.gray4,
+    borderRadius: 8,
+  },
+  skeletonSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  skeletonTitle: {
+    height: 24,
+    width: 200,
+    backgroundColor: colors.neutral.gray4,
+    borderRadius: 4,
+  },
+  skeletonButton: {
+    height: 20,
+    width: 80,
+    backgroundColor: colors.neutral.gray4,
+    borderRadius: 4,
   },
   emptyText: {
     textAlign: 'center',

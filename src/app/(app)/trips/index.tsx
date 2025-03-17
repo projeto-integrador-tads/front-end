@@ -1,15 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, RefreshControl, TouchableOpacity, Image } from 'react-native';
+import { View, Text, ScrollView, RefreshControl, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { typography } from '@/styles/shared/typography/typography';
+import { colors } from '@/styles/shared/colors/colors';
+import { Dialog } from '@/components/dialog/Dialog';
+import BusinessSvg from '@/assets/svgs/business-actor';
 import { styles } from './styles';
 import { reservationService, Reservation } from '@/services/api/reservations';
 import { rideService, Ride } from '@/services/api/rides';
 import { useUser } from '@/contexts/UserContext';
 import { IconArrowRight, IconUsers, IconCurrencyReal, IconClock, IconCheck, IconX, IconCar } from '@tabler/icons-react-native';
 import { router } from 'expo-router';
-import { colors } from '@/styles/shared/colors/colors';
-import { Dialog } from '@/components/dialog/Dialog';
+
+const localStyles = StyleSheet.create({
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  emptyStateText: {
+    color: colors.neutral.gray1,
+    textAlign: 'center',
+  },
+  driverInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+});
 
 export default function TripsScreen() {
   const { user } = useUser();
@@ -128,11 +153,11 @@ export default function TripsScreen() {
   };
 
   const handleSeeMoreReservations = () => {
-    router.push('/reservations' as any);
+    router.push('/trips/reservations' as any);
   };
 
   const handleSeeMoreRides = () => {
-    router.push('/rides' as any);
+    router.push('/trips/rides' as any);
   };
 
   const handleViewRideDetails = (rideId: string) => {
@@ -172,7 +197,7 @@ export default function TripsScreen() {
 
       <View style={styles.cardContent}>
         {reservation.Ride?.Driver && (
-          <View style={styles.driverInfo}>
+          <View style={localStyles.driverInfo}>
             <IconCar size={16} color={colors.neutral.gray2} />
             <Text style={[typography.caption, styles.infoText]}>
               {`${reservation.Ride.Driver.name} ${reservation.Ride.Driver.last_name}`}
@@ -247,6 +272,22 @@ export default function TripsScreen() {
             {ride.EndAddress.city}
           </Text>
         </View>
+        <View style={styles.statusBadge}>
+          <Text style={[typography.caption, { 
+            color: 
+              ride.status === 'IN_PROGRESS' ? colors.status.success :
+              ride.status === 'CANCELLED' ? colors.status.error :
+              ride.status === 'COMPLETED' ? colors.neutral.gray2 :
+              colors.status.warning,
+            fontWeight: '500'
+          }]}>
+            {ride.status === 'IN_PROGRESS' ? 'Em andamento' :
+             ride.status === 'CANCELLED' ? 'Cancelada' :
+             ride.status === 'COMPLETED' ? 'Finalizada' :
+             ride.status === 'SCHEDULED' ? 'Agendada' :
+             'Pendente'}
+          </Text>
+        </View>
       </View>
 
       <View style={styles.cardContent}>
@@ -282,10 +323,51 @@ export default function TripsScreen() {
     </TouchableOpacity>
     );
 
+  const hasNoData = !isLoadingReservations && !isLoadingRides && reservations.length === 0 && rides.length === 0;
+
+  const renderSkeletonCard = () => (
+    <View style={styles.skeletonCard}>
+      <View style={styles.skeletonHeader}>
+        <View style={styles.skeletonRoute}>
+          <View style={styles.skeletonCity} />
+          <View style={styles.skeletonIcon} />
+          <View style={styles.skeletonCity} />
+        </View>
+        <View style={styles.skeletonStatus} />
+      </View>
+      <View style={styles.skeletonInfo}>
+        <View style={styles.skeletonInfoItem}>
+          <View style={styles.skeletonIcon} />
+          <View style={styles.skeletonText} />
+        </View>
+        <View style={styles.skeletonInfoItem}>
+          <View style={styles.skeletonIcon} />
+          <View style={styles.skeletonText} />
+        </View>
+        <View style={styles.skeletonInfoItem}>
+          <View style={styles.skeletonIcon} />
+          <View style={styles.skeletonText} />
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderSkeletonSection = () => (
+    <View style={styles.section}>
+      <View style={styles.skeletonSectionHeader}>
+        <View style={styles.skeletonTitle} />
+        <View style={styles.skeletonButton} />
+      </View>
+      {[1, 2, 3].map((_, index) => (
+        <View key={index}>{renderSkeletonCard()}</View>
+      ))}
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
-        <Text style={[typography.h3, { color: colors.neutral.black }]}>Corridas e Reservas</Text>
+        <Text style={[typography.h3, { color: colors.neutral.black }]}>Viagens e reservas</Text>
       </View>
 
       <ScrollView
@@ -294,61 +376,57 @@ export default function TripsScreen() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        contentContainerStyle={hasNoData ? localStyles.emptyStateContainer : { paddingBottom: 120 }}
       >
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[typography.h3, styles.sectionTitle]}>Minhas Reservas de Carona</Text>
-            <TouchableOpacity 
-              style={styles.seeMoreButton}
-              onPress={handleSeeMoreReservations}
-            >
-              <Text style={[typography.button, styles.seeMoreText]}>Ver mais</Text>
-              <IconArrowRight size={20} color={colors.primary.normal.default} />
-            </TouchableOpacity>
-          </View>
-
-          {isLoadingReservations ? (
-            <View style={styles.loadingContainer}>
-              {[1, 2, 3].map((_, index) => (
-                <View key={index} style={[styles.card, styles.skeletonCard]} />
-              ))}
-            </View>
-          ) : reservations.length > 0 ? (
-            reservations.map(renderReservationCard)
-          ) : (
-            <Text style={[typography.body2, styles.emptyText]}>
-              Você ainda não reservou nenhuma carona.
+        {hasNoData ? (
+          <View style={localStyles.emptyState}>
+            <BusinessSvg width={200} height={200} />
+            <Text style={[typography.body1, localStyles.emptyStateText]}>
+              Suas viagens futuras serão exibidas aqui.
             </Text>
-          )}
-        </View>
+          </View>
+        ) : (
+          <>
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={[typography.h3, styles.sectionTitle]}>Minhas Reservas de Carona</Text>
+                <TouchableOpacity 
+                  style={styles.seeMoreButton}
+                  onPress={handleSeeMoreReservations}
+                >
+                  <Text style={[typography.button, styles.seeMoreText]}>Ver mais</Text>
+                  <IconArrowRight size={20} color={colors.primary.normal.default} />
+                </TouchableOpacity>
+              </View>
 
-        {user?.is_driver && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={[typography.h3, styles.sectionTitle]}>Caronas que Estou Oferecendo</Text>
-              <TouchableOpacity 
-                style={styles.seeMoreButton}
-                onPress={handleSeeMoreRides}
-              >
-                <Text style={[typography.button, styles.seeMoreText]}>Ver mais</Text>
-                <IconArrowRight size={20} color={colors.primary.normal.default} />
-              </TouchableOpacity>
+              {isLoadingReservations ? (
+                renderSkeletonSection()
+              ) : reservations.length > 0 ? (
+                reservations.map(renderReservationCard)
+              ) : null}
             </View>
 
-            {isLoadingRides ? (
-              <View style={styles.loadingContainer}>
-                {[1, 2, 3].map((_, index) => (
-                  <View key={index} style={[styles.card, styles.skeletonCard]} />
-                ))}
+            {user?.is_driver && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Text style={[typography.h3, styles.sectionTitle]}>Caronas que Estou Oferecendo</Text>
+                  <TouchableOpacity 
+                    style={styles.seeMoreButton}
+                    onPress={handleSeeMoreRides}
+                  >
+                    <Text style={[typography.button, styles.seeMoreText]}>Ver mais</Text>
+                    <IconArrowRight size={20} color={colors.primary.normal.default} />
+                  </TouchableOpacity>
+                </View>
+
+                {isLoadingRides ? (
+                  renderSkeletonSection()
+                ) : rides.length > 0 ? (
+                  rides.map(renderRideCard)
+                ) : null}
               </View>
-            ) : rides.length > 0 ? (
-              rides.map(renderRideCard)
-            ) : (
-              <Text style={[typography.body2, styles.emptyText]}>
-                Você ainda não está oferecendo nenhuma carona.
-              </Text>
             )}
-          </View>
+          </>
         )}
       </ScrollView>
     </SafeAreaView>

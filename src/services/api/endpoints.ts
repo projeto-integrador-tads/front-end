@@ -49,3 +49,10 @@ export const RESERVATION_ENDPOINTS = {
   CONFIRM: (reservation_id: string) =>
     `/reservations/confirm/${reservation_id}`,
 } as const;
+
+export const MESSAGE_ENDPOINTS = {
+  GET_CONVERSATIONS: '/messages/conversations',
+  GET_MESSAGES: (rideId: string) => `/messages/${rideId}`,
+  SEND_MESSAGE: '/messages',
+  GET_POSSIBLE_RECIPIENTS: '/messages/possible-recipients',
+} as const;

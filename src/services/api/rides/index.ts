@@ -170,12 +170,12 @@ class RideService {
 
   async getByDriver(
     page: number = 1,
-    pageSize: number = 10
+    perPage: number = 10
   ): Promise<PaginatedResponse<Ride>> {
     const response = await api.get<PaginatedResponse<Ride>>(
       RIDE_ENDPOINTS.GET_BY_DRIVER,
       {
-        params: { page, pageSize },
+        params: { page, perPage },
       }
     );
     return response.data;
