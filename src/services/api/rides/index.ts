@@ -1,6 +1,6 @@
-import api from '../index';
-import { RIDE_ENDPOINTS } from '../endpoints';
-import { z } from 'zod';
+import api from "../index";
+import { RIDE_ENDPOINTS } from "../endpoints";
+import { z } from "zod";
 
 export const createRideSchema = z
   .object({
@@ -56,37 +56,101 @@ export const updateRideSchema = z.object({
 export type CreateRideData = z.infer<typeof createRideSchema>;
 export type UpdateRideData = z.infer<typeof updateRideSchema>;
 
-export interface Ride {
+export interface Address {
   id: string;
-  driver_id: string;
-  vehicle_id: string;
-  start_location_id: string | null;
-  end_location_id: string | null;
-  start_latitude: number | null;
-  start_longitude: number | null;
-  end_latitude: number | null;
-  end_longitude: number | null;
-  start_time: string;
-  end_time: string | null;
-  price: number;
-  available_seats: number;
-  preferences: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
-  created_at: string;
-  updated_at: string;
+  street: string;
+  number: string;
+  complement: string | null;
+  neighborhood: string;
+  city: string;
+  state: string;
+  country: string;
+  postal_code: string;
+  latitude: number;
+  longitude: number;
 }
 
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
+export interface Driver {
+  name: string;
+  last_name: string;
+  email: string;
+}
+
+interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    lastPage: number;
+    currentPage: number;
+    perPage: number;
+    prev: number | null;
+    next: number | null;
+  };
+}
+
+interface Reservation {
+  passenger_id: string;
+  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+  Passenger: {
+    name: string;
+    last_name: string;
+  };
+}
+
+export interface Ride {
+  ride_id: string;
+  driver_id: string;
+  start_time: string;
+  price: string;
+  available_seats: number;
+  status: string;
+  preferences?: string;
+  StartAddress: {
+    city: string;
+    formattedAddress: string;
+    latitude: number;
+    longitude: number;
+  };
+  EndAddress: {
+    city: string;
+    formattedAddress: string;
+    latitude: number;
+    longitude: number;
+  };
+  Driver?: {
+    id: string;
+    name: string;
+    last_name: string;
+    average_rating?: number;
+  };
+  Vehicle?: {
+    brand: string;
+    model: string;
+    year: string;
+    color: string;
+    license_plate: string;
+    seats: number;
+  };
+  Reservations?: Array<{
+    status: string;
+  }>;
+}
+
+export interface ApiResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    lastPage: number;
+    currentPage: number;
+    perPage: number;
+    prev: number | null;
+    next: number | null;
+  };
 }
 
 class RideService {
-  async create(data: CreateRideData): Promise<Ride> {
-    const response = await api.post<Ride>(RIDE_ENDPOINTS.CREATE, data);
+  async create(data: CreateRideData): Promise<{ data: Ride }> {
+    const response = await api.post(RIDE_ENDPOINTS.CREATE, data);
     return response.data;
   }
 
@@ -104,24 +168,44 @@ class RideService {
     return response.data;
   }
 
-  async getByDriver(page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<Ride>> {
-    const response = await api.get<PaginatedResponse<Ride>>(RIDE_ENDPOINTS.GET_BY_DRIVER, {
-      params: { page, pageSize },
-    });
+  async getByDriver(
+    page: number = 1,
+    pageSize: number = 10
+  ): Promise<PaginatedResponse<Ride>> {
+    const response = await api.get<PaginatedResponse<Ride>>(
+      RIDE_ENDPOINTS.GET_BY_DRIVER,
+      {
+        params: { page, pageSize },
+      }
+    );
     return response.data;
   }
 
-  async getByStartCity(city: string, page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<Ride>> {
-    const response = await api.get<PaginatedResponse<Ride>>(RIDE_ENDPOINTS.GET_BY_START_CITY(city), {
-      params: { page, pageSize },
-    });
+  async getByStartCity(
+    city: string,
+    page: number = 1,
+    pageSize: number = 10
+  ): Promise<PaginatedResponse<Ride>> {
+    const response = await api.get<PaginatedResponse<Ride>>(
+      RIDE_ENDPOINTS.GET_BY_START_CITY(city),
+      {
+        params: { page, pageSize },
+      }
+    );
     return response.data;
   }
 
-  async getByDestinationCity(city: string, page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<Ride>> {
-    const response = await api.get<PaginatedResponse<Ride>>(RIDE_ENDPOINTS.GET_BY_DESTINATION_CITY(city), {
-      params: { page, pageSize },
-    });
+  async getByDestinationCity(
+    city: string,
+    page: number = 1,
+    pageSize: number = 10
+  ): Promise<ApiResponse<Ride>> {
+    const response = await api.get<ApiResponse<Ride>>(
+      RIDE_ENDPOINTS.GET_BY_DESTINATION_CITY(city),
+      {
+        params: { page, pageSize },
+      }
+    );
     return response.data;
   }
 
@@ -136,4 +220,4 @@ class RideService {
   }
 }
 
-export const rideService = new RideService(); 
+export const rideService = new RideService();

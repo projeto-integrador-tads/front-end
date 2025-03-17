@@ -1,4 +1,4 @@
-export const BASE_URL = "http://localhost:3000";
+export const BASE_URL = "https://17r3v2zg-3000.brs.devtunnels.ms/";
 
 export const AUTH_ENDPOINTS = {
   LOGIN: "/login",
@@ -13,6 +13,7 @@ export const USER_ENDPOINTS = {
   DELETE: "/users",
   UPLOAD_PICTURE: "/users/upload/img",
   GET_PICTURE: "/users/profile-picture",
+  GET_PICTURE_BY_ID: (id: string) => `/users/${id}/profile-picture`,
   DELETE_PICTURE: "/users/profile-picture",
   UPDATE: "/users",
 } as const;

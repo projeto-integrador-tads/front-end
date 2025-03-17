@@ -68,6 +68,11 @@ class UserService {
     return response.data;
   }
 
+  async getProfilePictureById(userId: string): Promise<ProfilePictureResponse> {
+    const response = await api.get<ProfilePictureResponse>(USER_ENDPOINTS.GET_PICTURE_BY_ID(userId));
+    return response.data;
+  }
+
   async deleteProfilePicture(): Promise<void> {
     await api.delete(USER_ENDPOINTS.DELETE_PICTURE);
   }

@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
-import { Redirect, Tabs } from 'expo-router';
-import { useUser } from '@/contexts/UserContext';
+import { useEffect } from "react";
+import { Redirect, Tabs } from "expo-router";
+import { useUser } from "@/contexts/UserContext";
 import { colors } from "@/styles/shared/colors/colors";
 import {
   IconHome,
@@ -59,21 +59,27 @@ export default function AppLayout() {
         name="home/index"
         options={{
           title: "Início",
-          tabBarIcon: ({ color, size }) => <IconHome size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <IconHome size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="offer/index"
         options={{
           title: "Oferecer",
-          tabBarIcon: ({ color, size }) => <IconCar size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <IconCar size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
-        name="trips/index"
+        name="trips"
         options={{
           title: "Viagens",
-          tabBarIcon: ({ color, size }) => <IconMap size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <IconMap size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -86,10 +92,12 @@ export default function AppLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile/index"
+        name="profile"
         options={{
           title: "Perfil",
-          tabBarIcon: ({ color, size }) => <IconUser size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <IconUser size={size} color={color} />
+          ),
         }}
       />
     </Tabs>

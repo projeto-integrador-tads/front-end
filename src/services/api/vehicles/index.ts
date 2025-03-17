@@ -24,39 +24,50 @@ export const updateVehicleSchema = z.object({
   seats: z.number().int().min(1).max(50).optional(),
 });
 
-export type CreateVehicleData = z.infer<typeof vehicleSchema>;
+export const createVehicleSchema = z.object({
+  brand: z.string().min(1, "Marca é obrigatória"),
+  model: z.string().min(1, "Modelo é obrigatório"),
+  year: z.number().min(1900, "Ano inválido"),
+  license_plate: z.string().regex(plate, "Placa inválida. Formato esperado: ABC1D23"),
+  color: z.string().min(1, "Cor é obrigatória"),
+  seats: z.number().min(1, "Número de assentos inválido"),
+});
+
+export type CreateVehicleData = z.infer<typeof createVehicleSchema>;
 export type UpdateVehicleData = z.infer<typeof updateVehicleSchema>;
 
 export interface Vehicle {
-  id: string;
-  user_id: string;
-  brand: string;
+  vehicle_id: string;
+  owner_id: string;
   model: string;
   year: number;
-  license_plate: string;
   color: string;
-  seats: number;
   active: boolean;
-  created_at: string;
-  updated_at: string;
+  seats: number;
 }
 
-export interface PaginatedResponse<T> {
-  items: T[];
+export interface PaginatedMeta {
   total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
+  lastPage: number;
+  currentPage: number;
+  perPage: number;
+  prev: number | null;
+  next: number | null;
+}
+
+export interface ApiResponse<T> {
+  data: T[];
+  meta: PaginatedMeta;
 }
 
 class VehicleService {
-  async create(data: CreateVehicleData): Promise<Vehicle> {
-    const response = await api.post<Vehicle>(VEHICLE_ENDPOINTS.CREATE, data);
+  async create(data: CreateVehicleData) {
+    const response = await api.post(VEHICLE_ENDPOINTS.CREATE, data);
     return response.data;
   }
 
-  async update(data: UpdateVehicleData): Promise<Vehicle> {
-    const response = await api.put<Vehicle>(VEHICLE_ENDPOINTS.UPDATE, data);
+  async update(data: UpdateVehicleData) {
+    const response = await api.put(VEHICLE_ENDPOINTS.UPDATE, data);
     return response.data;
   }
 
@@ -64,36 +75,20 @@ class VehicleService {
     await api.delete(VEHICLE_ENDPOINTS.DELETE(vehicle_id));
   }
 
-  async reactivate(vehicle_id: string): Promise<Vehicle> {
-    const response = await api.post<Vehicle>(
-      VEHICLE_ENDPOINTS.REACTIVATE(vehicle_id)
-    );
+  async reactivate(vehicle_id: string) {
+    const response = await api.post(VEHICLE_ENDPOINTS.REACTIVATE(vehicle_id));
     return response.data;
   }
 
-  async getActive(
-    page: number = 1,
-    pageSize: number = 10
-  ): Promise<PaginatedResponse<Vehicle>> {
-    const response = await api.get<PaginatedResponse<Vehicle>>(
-      VEHICLE_ENDPOINTS.GET_ACTIVE,
-      {
-        params: { page, pageSize },
-      }
-    );
+  async getActive() {
+    const response = await api.get(VEHICLE_ENDPOINTS.GET_ACTIVE);
     return response.data;
   }
 
-  async getInactive(
-    page: number = 1,
-    pageSize: number = 10
-  ): Promise<PaginatedResponse<Vehicle>> {
-    const response = await api.get<PaginatedResponse<Vehicle>>(
-      VEHICLE_ENDPOINTS.GET_INACTIVE,
-      {
-        params: { page, pageSize },
-      }
-    );
+  async getInactive(page: number = 1, pageSize: number = 10) {
+    const response = await api.get(VEHICLE_ENDPOINTS.GET_INACTIVE, {
+      params: { page, pageSize },
+    });
     return response.data;
   }
 }

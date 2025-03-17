@@ -1,5 +1,5 @@
 import axios, { InternalAxiosRequestConfig, AxiosResponse } from "axios";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "./endpoints";
 
 const api = axios.create({
@@ -29,7 +29,18 @@ api.interceptors.response.use(
       await AsyncStorage.removeItem("@App:token");
       await AsyncStorage.removeItem("@App:user");
     }
-    return Promise.reject(error);
+    
+    // Extract error message from response
+    const errorMessage = error.response?.data?.error || 
+                        error.response?.data?.message ||
+                        error.message ||
+                        'Ocorreu um erro na requisição';
+                        
+    return Promise.reject({
+      status: error.response?.status,
+      error: errorMessage,
+      data: error.response?.data
+    });
   }
 );
 
