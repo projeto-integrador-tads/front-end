@@ -56,7 +56,7 @@ export default function AppLayout() {
         }}
       />
       <Tabs.Screen
-        name="home/index"
+        name="home"
         options={{
           title: "Início",
           tabBarIcon: ({ color, size }) => (
@@ -67,7 +67,7 @@ export default function AppLayout() {
       <Tabs.Screen
         name="offer/index"
         options={{
-          title: "Oferecer",
+          title: "Corridas",
           tabBarIcon: ({ color, size }) => (
             <IconCar size={size} color={color} />
           ),
@@ -94,7 +94,7 @@ export default function AppLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Perfil",
+          title: "Conta",
           tabBarIcon: ({ color, size }) => (
             <IconUser size={size} color={color} />
           ),

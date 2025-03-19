@@ -55,15 +55,17 @@ const localStyles = StyleSheet.create({
     padding: 24,
     borderBottomWidth: 1,
     borderBottomColor: colors.neutral.gray4,
-  },
-  backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    padding: 4,
   },
   headerTitle: {
+    flex: 1,
     color: colors.neutral.black,
+    textAlign: 'left',
   },
   emptyStateContainer: {
     flex: 1,
@@ -241,9 +243,9 @@ export default function RidesScreen() {
       <View style={localStyles.header}>
         <TouchableOpacity style={localStyles.backButton} onPress={() => router.back()}>
           <IconArrowRight size={20} color={colors.neutral.black} style={{ transform: [{ rotate: '180deg' }] }} />
-          <Text style={[typography.button, { color: colors.neutral.black }]}>Voltar</Text>
         </TouchableOpacity>
         <Text style={[typography.h3, localStyles.headerTitle]}>Minhas Caronas</Text>
+        <View style={{ width: 24 }} />
       </View>
 
       <View style={localStyles.filtersContainer}>

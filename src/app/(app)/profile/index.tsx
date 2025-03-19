@@ -15,7 +15,7 @@ const menuItems = [
   {
     icon: IconCreditCard,
     label: "Pagamentos",
-    route: "payments"
+    route: "profile/payments"
   },
   {
     icon: IconUser,
@@ -30,17 +30,17 @@ const menuItems = [
   {
     icon: IconHeadset,
     label: "Suporte",
-    route: "support"
+    route: "profile/support"
   },
   {
     icon: IconSettings,
     label: "Configurações",
-    route: "settings"
+    route: "profile/settings"
   },
   {
     icon: IconLock,
-    label: "Políticas e Privacidade",
-    route: "privacy"
+    label: "Política de Privacidade",
+    route: "profile/privacy-policy"
   },
   {
     icon: IconCar,

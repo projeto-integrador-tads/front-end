@@ -107,7 +107,7 @@ export default function VehiclesScreen() {
           </View>
           <View style={styles.vehicleDetails}>
             <Text style={styles.vehicleDetailLabel}>Placa:</Text>
-            <Text style={styles.vehicleDetailValue}>{"ABC1234"}</Text>
+            <Text style={styles.vehicleDetailValue}>{vehicle.license_plate}</Text>
           </View>
         </View>
         <View style={styles.vehicleActions}>

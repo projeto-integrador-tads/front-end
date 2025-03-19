@@ -359,8 +359,17 @@ export const styles = StyleSheet.create({
     marginTop: 32,
   },
   loadingMore: {
-    alignItems: 'center',
     paddingVertical: 16,
+    alignItems: 'center',
+  },
+  seeMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: 8,
+    paddingVertical: 12,
+    marginTop: -4,
+    paddingHorizontal: 4,
   },
   reserveButton: {
     backgroundColor: colors.primary.normal.default,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, RefreshControl, TextInput } from "react-native";
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, RefreshControl, TextInput, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { typography } from "@/styles/shared/typography/typography";
 import { colors } from "@/styles/shared/colors/colors";
@@ -7,6 +7,8 @@ import { IconArrowRight, IconClock, IconPlus } from "@tabler/icons-react-native"
 import { router } from "expo-router";
 import EmailActorSvg from "@/assets/svgs/email-actor";
 import { messageService, Conversation } from "@/services/api/messages";
+import { useUser } from "@/contexts/UserContext";
+import { userService } from "@/services/api/user";
 
 const styles = StyleSheet.create({
   container: {
@@ -55,15 +57,27 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: colors.neutral.gray4,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
+  conversationContent: {
+    flex: 1,
   },
   conversationHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   userName: {
     color: colors.neutral.black,
+    fontWeight: '600',
   },
   timestamp: {
     flexDirection: 'row',
@@ -75,10 +89,10 @@ const styles = StyleSheet.create({
   },
   lastMessage: {
     color: colors.neutral.gray1,
+    marginBottom: 8,
   },
   rideInfo: {
-    marginTop: 12,
-    padding: 12,
+    padding: 8,
     backgroundColor: colors.neutral.background,
     borderRadius: 8,
     gap: 4,
@@ -165,10 +179,26 @@ const styles = StyleSheet.create({
 });
 
 export default function ChatsScreen() {
+  const { user } = useUser();
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [userPhotos, setUserPhotos] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const loadUserPhoto = async (userId: string) => {
+    try {
+      const response = await userService.getProfilePictureById(userId);
+      if (response?.url) {
+        setUserPhotos(prev => ({
+          ...prev,
+          [userId]: response.url
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading user photo:', error);
+    }
+  };
 
   const loadConversations = async () => {
     try {
@@ -176,6 +206,12 @@ export default function ChatsScreen() {
       const response = await messageService.getConversations();
       if (response?.data) {
         setConversations(response.data);
+        
+        // Load photos for all users in conversations
+        const userIds = new Set(response.data.flatMap(conv => [conv.driver_id, conv.passenger_id]));
+        userIds.forEach(userId => {
+          loadUserPhoto(userId);
+        });
       }
     } catch (error) {
       console.error('Error loading conversations:', error);
@@ -205,60 +241,84 @@ export default function ChatsScreen() {
 
   const renderSkeletonCard = () => (
     <View style={styles.skeletonCard}>
-      <View style={styles.skeletonHeader}>
-        <View style={styles.skeletonName} />
-        <View style={styles.skeletonTime} />
-      </View>
-      <View style={styles.skeletonMessage} />
-      <View style={styles.skeletonRide}>
-        <View style={styles.skeletonRoute}>
-          <View style={styles.skeletonCity} />
-          <View style={styles.skeletonIcon} />
-          <View style={styles.skeletonCity} />
+      <View style={[styles.avatar, { backgroundColor: colors.neutral.gray4 }]} />
+      <View style={{ flex: 1, gap: 8 }}>
+        <View style={styles.skeletonHeader}>
+          <View style={styles.skeletonName} />
+          <View style={styles.skeletonTime} />
+        </View>
+        <View style={styles.skeletonMessage} />
+        <View style={styles.skeletonRide}>
+          <View style={styles.skeletonRoute}>
+            <View style={styles.skeletonCity} />
+            <View style={styles.skeletonIcon} />
+            <View style={styles.skeletonCity} />
+          </View>
         </View>
       </View>
     </View>
   );
 
-  const renderConversationCard = (conversation: Conversation) => (
-    <TouchableOpacity 
-      key={`${conversation.ride_id}-${conversation.driver_id}-${conversation.passenger_id}`}
-      style={styles.conversationCard}
-      onPress={() => router.push(`/chats/${conversation.ride_id}` as any)}
-    >
-      <View style={styles.conversationHeader}>
-        <Text style={[typography.subtitle1, styles.userName]}>
-          {conversation.driver_id === conversation.passenger_id 
-            ? `${conversation.passenger_name} ${conversation.passenger_last_name}`
-            : `${conversation.driver_name} ${conversation.driver_last_name}`}
-        </Text>
-        <View style={styles.timestamp}>
-          <IconClock size={16} color={colors.neutral.gray2} />
-          <Text style={[typography.caption, styles.timestampText]}>
-            {formatDate(conversation.last_message.createdAt)}
-          </Text>
-        </View>
-      </View>
+  const renderConversationCard = (conversation: Conversation) => {
+    const otherUser = conversation.driver_id === user?.id ? {
+      id: conversation.passenger_id,
+      name: conversation.passenger_name,
+      lastName: conversation.passenger_last_name
+    } : {
+      id: conversation.driver_id,
+      name: conversation.driver_name,
+      lastName: conversation.driver_last_name
+    };
 
-      <Text style={[typography.body2, styles.lastMessage]} numberOfLines={2}>
-        {conversation.last_message.content}
-      </Text>
+    const photoUrl = userPhotos[otherUser.id];
 
-      {conversation.ride_details && (
-        <View style={styles.rideInfo}>
-          <View style={styles.rideRoute}>
-            <Text style={[typography.caption, styles.rideCity]} numberOfLines={1}>
-              {conversation.ride_details.start_address}
+    return (
+      <TouchableOpacity 
+        key={`${conversation.ride_id}-${conversation.driver_id}-${conversation.passenger_id}`}
+        style={styles.conversationCard}
+        onPress={() => router.push(`/chats/${conversation.ride_id}` as any)}
+      >
+        <Image
+          source={{
+            uri: photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUser.name + ' ' + otherUser.lastName)}&background=random`
+          }}
+          style={styles.avatar}
+        />
+        
+        <View style={styles.conversationContent}>
+          <View style={styles.conversationHeader}>
+            <Text style={[typography.subtitle1, styles.userName]} numberOfLines={1}>
+              {otherUser.name} {otherUser.lastName}
             </Text>
-            <IconArrowRight size={16} color={colors.neutral.gray2} />
-            <Text style={[typography.caption, styles.rideCity]} numberOfLines={1}>
-              {conversation.ride_details.end_address}
-            </Text>
+            <View style={styles.timestamp}>
+              <IconClock size={14} color={colors.neutral.gray2} />
+              <Text style={[typography.caption, styles.timestampText]}>
+                {formatDate(conversation.last_message.createdAt)}
+              </Text>
+            </View>
           </View>
+
+          <Text style={[typography.body2, styles.lastMessage]} numberOfLines={2}>
+            {conversation.last_message.content}
+          </Text>
+
+          {conversation.ride_details && (
+            <View style={styles.rideInfo}>
+              <View style={styles.rideRoute}>
+                <Text style={[typography.caption, styles.rideCity]} numberOfLines={1}>
+                  {conversation.ride_details.start_address}
+                </Text>
+                <IconArrowRight size={14} color={colors.neutral.gray2} />
+                <Text style={[typography.caption, styles.rideCity]} numberOfLines={1}>
+                  {conversation.ride_details.end_address}
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
-      )}
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>

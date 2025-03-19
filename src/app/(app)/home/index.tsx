@@ -1,11 +1,37 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TextInput, Image, TouchableOpacity, Modal, ActivityIndicator, StyleSheet, RefreshControl, Alert } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  TextInput,
+  Image,
+  TouchableOpacity,
+  Modal,
+  ActivityIndicator,
+  StyleSheet,
+  RefreshControl,
+  Alert,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { typography } from "@/styles/shared/typography/typography";
 import { colors } from "@/styles/shared/colors/colors";
 import { styles } from "./styles";
 import { useUser } from "@/contexts/UserContext";
-import { IconSearch, IconCar, IconHome, IconPlane, IconMapPin, IconX, IconArrowRight, IconUsers, IconCurrencyReal, IconClock, IconCreditCard, IconMessage } from "@tabler/icons-react-native";
+import {
+  IconSearch,
+  IconCar,
+  IconHome,
+  IconPlane,
+  IconMapPin,
+  IconX,
+  IconArrowRight,
+  IconUsers,
+  IconCurrencyReal,
+  IconClock,
+  IconCreditCard,
+  IconMessage,
+  IconBox,
+} from "@tabler/icons-react-native";
 import { Link, router } from "expo-router";
 import BgBlueSvg from "@/assets/svgs/bg-blue";
 import { PromoCard } from "@/components/promo-card/PromoCard";
@@ -17,58 +43,31 @@ import { userService, User } from "@/services/api/user";
 import { rideService, Ride } from "@/services/api/rides";
 import { useDebounce } from "@/hooks/useDebounce";
 import MapView, { Marker } from "react-native-maps";
-import * as Location from 'expo-location';
+import * as Location from "expo-location";
 import { RideCard } from "@/components/ride-card/RideCard";
 import { reservationService } from "@/services/api/reservations";
 import { Button } from "@/components/button/Button";
 import { Dialog } from "@/components/dialog/Dialog";
 
 const serviceOptions = [
+  { icon: IconHome, label: "Reservas", route: "/(app)/trips/reservations" },
   { icon: IconCar, label: "Carros", route: "profile/vehicles" },
-  { icon: IconHome, label: "Hotéis", route: "(app)/services/hotels" },
-  { icon: IconPlane, label: "Voos", route: "(app)/services/flights" },
-  { icon: IconMapPin, label: "Destinos", route: "(app)/services/destinations" },
+  { icon: IconMapPin, label: "Explorar", route: "/(app)/home/more" },
+  { icon: IconBox, label: "Entregas", route: "/(app)/home/deliveries" },
 ];
 
-const featuredTrips = [
-  {
-    id: "1",
-    city: "Rio de Janeiro",
-    date: "24-30 Março",
-    spots: "12 lugares disponíveis",
-    image: "https://images.unsplash.com/photo-1483729558449-99ef09a8c325?w=800&auto=format&fit=crop&q=80"
-  },
-  {
-    id: "2",
-    city: "São Paulo",
-    date: "15-20 Abril",
-    spots: "8 lugares disponíveis",
-    image: "https://images.unsplash.com/photo-1578002573559-689b0abc4148?w=800&auto=format&fit=crop&q=80"
-  },
-  {
-    id: "3",
-    city: "Salvador",
-    date: "1-7 Maio",
-    spots: "15 lugares disponíveis",
-    image: "https://images.unsplash.com/photo-1564659907532-6b5f98c8e70f?w=800&auto=format&fit=crop&q=80"
-  },
-];
+const calculateAvailableSeats = (ride: Ride) => ride.available_seats;
 
-// Helper function to calculate available seats
-const calculateAvailableSeats = (ride: Ride) => {
-  const pendingReservations = ride.Reservations?.filter(r => r.status === "PENDING").length || 0;
-  return Math.max(0, ride.available_seats - pendingReservations);
-};
 
-const SearchModal = ({ 
-  visible, 
-  onClose, 
-  searchQuery, 
-  setSearchQuery, 
-  isSearching, 
+const SearchModal = ({
+  visible,
+  onClose,
+  searchQuery,
+  setSearchQuery,
+  isSearching,
   searchResults,
-  onCardPress 
-}: { 
+  onCardPress,
+}: {
   visible: boolean;
   onClose: () => void;
   searchQuery: string;
@@ -77,11 +76,7 @@ const SearchModal = ({
   searchResults: Ride[];
   onCardPress: (ride: Ride) => void;
 }) => (
-  <Modal
-    visible={visible}
-    animationType="slide"
-    onRequestClose={onClose}
-  >
+  <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
     <SafeAreaView style={styles.modalContainer}>
       <View style={styles.modalHeader}>
         <View style={styles.searchInputContainer}>
@@ -99,11 +94,10 @@ const SearchModal = ({
             </TouchableOpacity>
           ) : null}
         </View>
-        <TouchableOpacity 
-          onPress={onClose}
-          style={styles.closeButton}
-        >
-          <Text style={[typography.body2, { color: colors.primary.normal.default }]}>
+        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <Text
+            style={[typography.body2, { color: colors.primary.normal.default }]}
+          >
             Cancelar
           </Text>
         </TouchableOpacity>
@@ -122,11 +116,17 @@ const SearchModal = ({
               onPress={() => onCardPress(ride)}
             >
               <View style={styles.searchResultRoute}>
-                <Text style={[typography.body1, styles.searchResultCity]} numberOfLines={1}>
+                <Text
+                  style={[typography.body1, styles.searchResultCity]}
+                  numberOfLines={1}
+                >
                   {ride.StartAddress.city}
                 </Text>
                 <IconArrowRight size={20} color={colors.neutral.gray2} />
-                <Text style={[typography.body1, styles.searchResultCity]} numberOfLines={1}>
+                <Text
+                  style={[typography.body1, styles.searchResultCity]}
+                  numberOfLines={1}
+                >
                   {ride.EndAddress.city}
                 </Text>
               </View>
@@ -135,11 +135,11 @@ const SearchModal = ({
                 <View style={styles.searchResultDetail}>
                   <IconClock size={16} color={colors.neutral.gray2} />
                   <Text style={[typography.caption, styles.searchResultText]}>
-                    {new Date(ride.start_time).toLocaleDateString('pt-BR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      hour: '2-digit',
-                      minute: '2-digit'
+                    {new Date(ride.start_time).toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
                     })}
                   </Text>
                 </View>
@@ -154,9 +154,9 @@ const SearchModal = ({
                 <View style={styles.searchResultDetail}>
                   <IconCurrencyReal size={16} color={colors.neutral.gray2} />
                   <Text style={[typography.caption, styles.searchResultText]}>
-                    {new Intl.NumberFormat('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL'
+                    {new Intl.NumberFormat("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
                     }).format(parseFloat(ride.price))}
                   </Text>
                 </View>
@@ -185,21 +185,32 @@ export default function HomeScreen() {
   const [selectedRide, setSelectedRide] = useState<Ride | null>(null);
   const [driverPicture, setDriverPicture] = useState<string | null>(null);
   const [isLoadingRideDetails, setIsLoadingRideDetails] = useState(false);
-  const [driverInfo, setDriverInfo] = useState<{ name: string; last_name: string } | null>(null);
+  const [driverInfo, setDriverInfo] = useState<{
+    name: string;
+    last_name: string;
+  } | null>(null);
   const [showRideDetails, setShowRideDetails] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState<Location.LocationObject | null>(null);
+  const [currentLocation, setCurrentLocation] =
+    useState<Location.LocationObject | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [nearbyRides, setNearbyRides] = useState<Ride[]>([]);
   const [isLoadingRides, setIsLoadingRides] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMoreRides, setHasMoreRides] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [driversInfo, setDriversInfo] = useState<Record<string, { photo: string | null; name: string }>>({});
+  const [driversInfo, setDriversInfo] = useState<
+    Record<string, { photo: string | null; name: string }>
+  >({});
   const [isReserving, setIsReserving] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   const capitalizedName = user?.name
-    ? user.name.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')
+    ? user.name
+        .split(" ")
+        .map(
+          (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        )
+        .join(" ")
     : "Usuário";
 
   useEffect(() => {
@@ -208,7 +219,7 @@ export default function HomeScreen() {
         const pictureResponse = await userService.getProfilePicture();
         setProfilePicture(pictureResponse.url);
       } catch (error) {
-        console.error('Error loading profile picture:', error);
+        console.error("Error loading profile picture:", error);
       } finally {
         setIsLoading(false);
       }
@@ -233,22 +244,51 @@ export default function HomeScreen() {
       const response = await rideService.getByDestinationCity(trimmedQuery);
       setSearchResults(response?.data || []);
     } catch (error) {
-      console.error('Search error:', error);
+      console.error("Search error:", error);
     } finally {
       setIsSearching(false);
     }
   };
 
-  const renderServiceOption = (option: typeof serviceOptions[0]) => (
-    <View key={option.label} style={styles.serviceOption}>
-      <Link href={option.route as any}>
-        <View style={styles.serviceIconContainer}>
-          <option.icon size={32} color={colors.primary.normal.default} />
-        </View>
-      </Link>
-      <Text style={styles.serviceLabel}>{option.label}</Text>
-    </View>
-  );
+  const renderServiceOption = (option: (typeof serviceOptions)[0]) => {
+    const getColors = (label: string): { container: { backgroundColor: string }, icon: string } => {
+      switch (label) {
+        case "Reservas":
+          return {
+            container: { backgroundColor: 'rgba(21, 128, 61, 0.1)' },
+            icon: '#15803D'
+          };
+        case "Explorar":
+          return {
+            container: { backgroundColor: 'rgba(239, 68, 68, 0.1)' },
+            icon: '#EF4444'
+          };
+        case "Entregas":
+          return {
+            container: { backgroundColor: 'rgba(234, 179, 8, 0.1)' },
+            icon: '#EAB308'
+          };
+        default:
+          return {
+            container: { backgroundColor: colors.primary.light.default },
+            icon: colors.primary.normal.default
+          };
+      }
+    };
+
+    const colorScheme = getColors(option.label);
+
+    return (
+      <View key={option.label} style={styles.serviceOption}>
+        <Link href={option.route as any}>
+          <View style={[styles.serviceIconContainer, colorScheme.container]}>
+            <option.icon size={32} color={colorScheme.icon} />
+          </View>
+        </Link>
+        <Text style={styles.serviceLabel}>{option.label}</Text>
+      </View>
+    );
+  };
 
   const handleCloseSearch = () => {
     setShowSearchModal(false);
@@ -261,19 +301,19 @@ export default function HomeScreen() {
     setShowRideDetails(true);
     setIsLoadingRideDetails(true);
     handleCloseSearch();
-    
+
     try {
       const [rideDetails, driverPic, driverData] = await Promise.all([
         rideService.getById(ride.ride_id),
         userService.getProfilePictureById(ride.driver_id),
-        userService.getById(ride.driver_id)
+        userService.getById(ride.driver_id),
       ]);
-      
+
       setSelectedRide(rideDetails);
       setDriverPicture(driverPic.url);
       setDriverInfo(driverData);
     } catch (error) {
-      console.error('Error loading ride details:', error);
+      console.error("Error loading ride details:", error);
     } finally {
       setIsLoadingRideDetails(false);
     }
@@ -281,7 +321,6 @@ export default function HomeScreen() {
 
   const handleCloseRideDetails = () => {
     setShowRideDetails(false);
-    // Clear data after animation completes
     setTimeout(() => {
       setSelectedRide(null);
       setDriverPicture(null);
@@ -299,9 +338,23 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.modalOverlay}>
         <View style={styles.rideDetailsContainer}>
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={handleCloseRideDetails} style={styles.backButton}>
-              <IconArrowRight size={24} color={colors.neutral.black} style={{ transform: [{ rotate: '180deg' }] }} />
-              <Text style={[typography.body2, { color: colors.neutral.black, marginLeft: 4 }]}>Voltar</Text>
+            <TouchableOpacity
+              onPress={handleCloseRideDetails}
+              style={styles.backButton}
+            >
+              <IconArrowRight
+                size={24}
+                color={colors.neutral.black}
+                style={{ transform: [{ rotate: "180deg" }] }}
+              />
+              <Text
+                style={[
+                  typography.body2,
+                  { color: colors.neutral.black, marginLeft: 4 },
+                ]}
+              >
+                Voltar
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -332,71 +385,134 @@ export default function HomeScreen() {
             )}
 
             <View style={styles.rideContent}>
-              <Text style={[typography.h3, { marginBottom: 16 }]}>Informações do Motorista</Text>
-              
+              <Text style={[typography.h3, { marginBottom: 16 }]}>
+                Informações do Motorista
+              </Text>
+
               <View style={styles.driverSection}>
                 {isLoadingRideDetails ? (
                   <>
                     <Skeleton width={48} height={48} borderRadius={24} />
                     <View style={styles.driverInfo}>
-                      <Skeleton width={120} height={20} style={{ marginBottom: 4 }} />
+                      <Skeleton
+                        width={120}
+                        height={20}
+                        style={{ marginBottom: 4 }}
+                      />
                       <Skeleton width={80} height={16} />
                     </View>
                   </>
                 ) : (
                   <>
                     {driverPicture ? (
-                      <Image source={{ uri: driverPicture }} style={styles.driverPicture} />
+                      <Image
+                        source={{ uri: driverPicture }}
+                        style={styles.driverPicture}
+                      />
                     ) : (
-                      <View style={[styles.driverPicture, { backgroundColor: colors.neutral.gray4 }]} />
+                      <View
+                        style={[
+                          styles.driverPicture,
+                          { backgroundColor: colors.neutral.gray4 },
+                        ]}
+                      />
                     )}
                     <View style={styles.driverInfo}>
-                      <Text style={[typography.body1, { color: colors.neutral.black }]}>
-                        {driverInfo ? `${driverInfo.name} ${driverInfo.last_name}` : 'Motorista'}
+                      <Text
+                        style={[
+                          typography.body1,
+                          { color: colors.neutral.black },
+                        ]}
+                      >
+                        {driverInfo
+                          ? `${driverInfo.name} ${driverInfo.last_name}`
+                          : "Motorista"}
                       </Text>
-                      <Text style={[typography.caption, { color: colors.neutral.gray2 }]}>Motorista</Text>
+                      <Text
+                        style={[
+                          typography.caption,
+                          { color: colors.neutral.gray2 },
+                        ]}
+                      >
+                        Motorista
+                      </Text>
                     </View>
                     {selectedRide?.driver_id !== user?.id && (
                       <TouchableOpacity style={styles.messageButton}>
-                        <IconMessage size={24} color={colors.primary.normal.default} />
+                        <IconMessage
+                          size={24}
+                          color={colors.primary.normal.default}
+                        />
                       </TouchableOpacity>
                     )}
                   </>
                 )}
               </View>
 
-              <Text style={[typography.h3, { marginTop: 24, marginBottom: 16 }]}>Informações sobre a viagem</Text>
+              <Text
+                style={[typography.h3, { marginTop: 24, marginBottom: 16 }]}
+              >
+                Informações sobre a viagem
+              </Text>
 
               {isLoadingRideDetails ? (
                 <>
                   <View style={styles.locationItem}>
-                    <IconCurrencyReal size={24} color={colors.primary.normal.default} />
+                    <IconCurrencyReal
+                      size={24}
+                      color={colors.primary.normal.default}
+                    />
                     <View style={styles.locationText}>
-                      <Skeleton width={80} height={16} style={{ marginBottom: 4 }} />
+                      <Skeleton
+                        width={80}
+                        height={16}
+                        style={{ marginBottom: 4 }}
+                      />
                       <Skeleton width={120} height={20} />
                     </View>
                   </View>
 
                   <View style={styles.locationItem}>
-                    <IconMapPin size={24} color={colors.primary.normal.default} />
+                    <IconMapPin
+                      size={24}
+                      color={colors.primary.normal.default}
+                    />
                     <View style={styles.locationText}>
-                      <Skeleton width={80} height={16} style={{ marginBottom: 4 }} />
+                      <Skeleton
+                        width={80}
+                        height={16}
+                        style={{ marginBottom: 4 }}
+                      />
                       <Skeleton width={200} height={20} />
                     </View>
                   </View>
 
                   <View style={styles.locationItem}>
-                    <IconMapPin size={24} color={colors.primary.normal.default} />
+                    <IconMapPin
+                      size={24}
+                      color={colors.primary.normal.default}
+                    />
                     <View style={styles.locationText}>
-                      <Skeleton width={80} height={16} style={{ marginBottom: 4 }} />
+                      <Skeleton
+                        width={80}
+                        height={16}
+                        style={{ marginBottom: 4 }}
+                      />
                       <Skeleton width={200} height={20} />
                     </View>
                   </View>
 
                   <View style={styles.locationItem}>
-                    <IconClock size={24} color={colors.primary.normal.default} />
+                    <IconClock
+                      size={24}
+                      color={colors.primary.normal.default}
+                    />
                     <View style={styles.locationText}>
-                      <Skeleton width={80} height={16} style={{ marginBottom: 4 }} />
+                      <Skeleton
+                        width={80}
+                        height={16}
+                        style={{ marginBottom: 4 }}
+                      />
                       <Skeleton width={160} height={20} />
                     </View>
                   </View>
@@ -404,50 +520,115 @@ export default function HomeScreen() {
               ) : (
                 <>
                   <View style={styles.locationItem}>
-                    <IconCurrencyReal size={24} color={colors.primary.normal.default} />
+                    <IconCurrencyReal
+                      size={24}
+                      color={colors.primary.normal.default}
+                    />
                     <View style={styles.locationText}>
-                      <Text style={[typography.caption, { color: colors.neutral.gray2 }]}>Valor da viagem</Text>
-                      <Text style={[typography.body1, { color: colors.neutral.black }]}>
-                        {selectedRide && new Intl.NumberFormat('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL'
-                        }).format(parseFloat(selectedRide.price))}
+                      <Text
+                        style={[
+                          typography.caption,
+                          { color: colors.neutral.gray2 },
+                        ]}
+                      >
+                        Valor da viagem
+                      </Text>
+                      <Text
+                        style={[
+                          typography.body1,
+                          { color: colors.neutral.black },
+                        ]}
+                      >
+                        {selectedRide &&
+                          new Intl.NumberFormat("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          }).format(parseFloat(selectedRide.price))}
                       </Text>
                     </View>
                   </View>
 
                   <View style={styles.locationItem}>
-                    <IconMapPin size={24} color={colors.primary.normal.default} />
+                    <IconMapPin
+                      size={24}
+                      color={colors.primary.normal.default}
+                    />
                     <View style={styles.locationText}>
-                      <Text style={[typography.caption, { color: colors.neutral.gray2 }]}>Local de partida</Text>
-                      <Text style={[typography.body1, { color: colors.neutral.black }]}>
+                      <Text
+                        style={[
+                          typography.caption,
+                          { color: colors.neutral.gray2 },
+                        ]}
+                      >
+                        Local de partida
+                      </Text>
+                      <Text
+                        style={[
+                          typography.body1,
+                          { color: colors.neutral.black },
+                        ]}
+                      >
                         {selectedRide?.StartAddress.formattedAddress}
                       </Text>
                     </View>
                   </View>
 
                   <View style={styles.locationItem}>
-                    <IconMapPin size={24} color={colors.primary.normal.default} />
+                    <IconMapPin
+                      size={24}
+                      color={colors.primary.normal.default}
+                    />
                     <View style={styles.locationText}>
-                      <Text style={[typography.caption, { color: colors.neutral.gray2 }]}>Destino</Text>
-                      <Text style={[typography.body1, { color: colors.neutral.black }]}>
+                      <Text
+                        style={[
+                          typography.caption,
+                          { color: colors.neutral.gray2 },
+                        ]}
+                      >
+                        Destino
+                      </Text>
+                      <Text
+                        style={[
+                          typography.body1,
+                          { color: colors.neutral.black },
+                        ]}
+                      >
                         {selectedRide?.EndAddress.formattedAddress}
                       </Text>
                     </View>
                   </View>
 
                   <View style={styles.locationItem}>
-                    <IconClock size={24} color={colors.primary.normal.default} />
+                    <IconClock
+                      size={24}
+                      color={colors.primary.normal.default}
+                    />
                     <View style={styles.locationText}>
-                      <Text style={[typography.caption, { color: colors.neutral.gray2 }]}>Data e hora</Text>
-                      <Text style={[typography.body1, { color: colors.neutral.black }]}>
-                        {selectedRide && new Date(selectedRide.start_time).toLocaleString('pt-BR', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
+                      <Text
+                        style={[
+                          typography.caption,
+                          { color: colors.neutral.gray2 },
+                        ]}
+                      >
+                        Data e hora
+                      </Text>
+                      <Text
+                        style={[
+                          typography.body1,
+                          { color: colors.neutral.black },
+                        ]}
+                      >
+                        {selectedRide &&
+                          new Date(selectedRide.start_time).toLocaleString(
+                            "pt-BR",
+                            {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )}
                       </Text>
                     </View>
                   </View>
@@ -456,31 +637,54 @@ export default function HomeScreen() {
             </View>
           </ScrollView>
 
-          {selectedRide && !isLoadingRideDetails && selectedRide.driver_id !== user?.id && (
-            <View style={styles.bottomActions}>
-              <TouchableOpacity 
-                style={[
-                  styles.payButton,
-                  { opacity: calculateAvailableSeats(selectedRide) > 0 && !hasUserReservation(selectedRide) ? 1 : 0.5 }
-                ]}
-                onPress={() => handleReserveRide(selectedRide)}
-                disabled={calculateAvailableSeats(selectedRide) === 0 || hasUserReservation(selectedRide)}
-              >
-                <Text style={[typography.button, { color: colors.neutral.white }]}>
-                  {hasUserReservation(selectedRide)
-                    ? "Você já tem uma reserva para esta carona"
-                    : selectedRide.available_seats === 0 
-                    ? "Sem vagas disponíveis"
-                    : `Reservar por ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(selectedRide.price))}`}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
-          
+          {selectedRide &&
+            !isLoadingRideDetails &&
+            selectedRide.driver_id !== user?.id && (
+              <View style={styles.bottomActions}>
+                <TouchableOpacity
+                  style={[
+                    styles.payButton,
+                    {
+                      opacity:
+                        calculateAvailableSeats(selectedRide) > 0 &&
+                        !hasUserReservation(selectedRide)
+                          ? 1
+                          : 0.5,
+                    },
+                  ]}
+                  onPress={() => handleReserveRide(selectedRide)}
+                  disabled={
+                    calculateAvailableSeats(selectedRide) === 0 ||
+                    hasUserReservation(selectedRide)
+                  }
+                >
+                  <Text
+                    style={[typography.button, { color: colors.neutral.white }]}
+                  >
+                    {hasUserReservation(selectedRide)
+                      ? "Você já tem uma reserva para esta carona"
+                      : selectedRide.available_seats === 0
+                      ? "Sem vagas disponíveis"
+                      : `Reservar por ${new Intl.NumberFormat("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        }).format(parseFloat(selectedRide.price))}`}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
           {selectedRide && selectedRide.driver_id === user?.id && (
             <View style={styles.bottomActions}>
-              <View style={[styles.payButton, { backgroundColor: colors.neutral.gray3 }]}>
-                <Text style={[typography.button, { color: colors.neutral.white }]}>
+              <View
+                style={[
+                  styles.payButton,
+                  { backgroundColor: colors.neutral.gray3 },
+                ]}
+              >
+                <Text
+                  style={[typography.button, { color: colors.neutral.white }]}
+                >
                   Esta é sua carona
                 </Text>
               </View>
@@ -498,56 +702,57 @@ export default function HomeScreen() {
   const requestLocationPermission = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === 'granted') {
+      if (status === "granted") {
         const location = await Location.getCurrentPositionAsync({});
         setCurrentLocation(location);
         loadNearbyRides(1);
       } else {
-        setLocationError('Permissão de localização negada');
+        setLocationError("Permissão de localização negada");
         loadNearbyRides(1);
       }
     } catch (error) {
-      console.error('Error requesting location permission:', error);
-      setLocationError('Erro ao obter localização');
+      console.error("Error requesting location permission:", error);
+      setLocationError("Erro ao obter localização");
       loadNearbyRides(1);
     }
   };
 
-  const loadNearbyRides = async (page: number, shouldRefresh: boolean = false) => {
+  const loadNearbyRides = async (
+    page: number,
+    shouldRefresh: boolean = false
+  ) => {
     try {
       setIsLoadingRides(true);
       let response;
-      
+
       if (currentLocation) {
         const geocode = await Location.reverseGeocodeAsync({
           latitude: currentLocation.coords.latitude,
-          longitude: currentLocation.coords.longitude
+          longitude: currentLocation.coords.longitude,
         });
-        
+
         if (geocode[0]?.city) {
-          response = await rideService.getByStartCity(geocode[0].city, page);
+          response = await rideService.getByStartCity(geocode[0].city, page, 2);
         } else {
-          response = await rideService.getByStartCity("Coronel Murta", page);
+          response = await rideService.getByStartCity("Coronel Murta", page, 2);
         }
       } else {
-        response = await rideService.getByStartCity("Coronel Murta", page);
+        response = await rideService.getByStartCity("Coronel Murta", page, 2);
       }
 
       if (response?.data) {
         if (shouldRefresh) {
           setNearbyRides(response.data);
-          // Load drivers info for new rides
           loadDriversInfo(response.data);
         } else {
-          setNearbyRides(prev => [...prev, ...response.data]);
-          // Load drivers info for new rides
+          setNearbyRides((prev) => [...prev, ...response.data]);
           loadDriversInfo(response.data);
         }
         setHasMoreRides(page < (response.meta?.lastPage || 1));
         setCurrentPage(page);
       }
     } catch (error) {
-      console.error('Error loading nearby rides:', error);
+      console.error("Error loading nearby rides:", error);
     } finally {
       setIsLoadingRides(false);
     }
@@ -555,37 +760,47 @@ export default function HomeScreen() {
 
   const loadDriversInfo = async (rides: Ride[]) => {
     try {
-      const driversToLoad = rides.filter(ride => !driversInfo[ride.driver_id]);
-      
+      const driversToLoad = rides.filter(
+        (ride) => !driversInfo[ride.driver_id]
+      );
+
       const driversData = await Promise.all(
         driversToLoad.map(async (ride) => {
           try {
             const [photoResponse, userResponse] = await Promise.all([
               userService.getProfilePictureById(ride.driver_id),
-              userService.getById(ride.driver_id)
+              userService.getById(ride.driver_id),
             ]);
             return {
               id: ride.driver_id,
               photo: photoResponse.url,
-              name: `${userResponse.name.split(' ')[0]}`
+              name: `${userResponse.name.split(" ")[0]}`,
             };
           } catch (error) {
-            console.error(`Error loading driver info for ${ride.driver_id}:`, error);
+            console.error(
+              `Error loading driver info for ${ride.driver_id}:`,
+              error
+            );
             return {
               id: ride.driver_id,
               photo: null,
-              name: "Motorista"
+              name: "Motorista",
             };
           }
         })
       );
 
-      setDriversInfo(prev => ({
+      setDriversInfo((prev) => ({
         ...prev,
-        ...Object.fromEntries(driversData.map(driver => [driver.id, { photo: driver.photo, name: driver.name }]))
+        ...Object.fromEntries(
+          driversData.map((driver) => [
+            driver.id,
+            { photo: driver.photo, name: driver.name },
+          ])
+        ),
       }));
     } catch (error) {
-      console.error('Error loading drivers info:', error);
+      console.error("Error loading drivers info:", error);
     }
   };
 
@@ -597,12 +812,12 @@ export default function HomeScreen() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
+    return date.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -613,7 +828,7 @@ export default function HomeScreen() {
       const pictureResponse = await userService.getProfilePicture();
       setProfilePicture(pictureResponse.url);
     } catch (error) {
-      console.error('Error refreshing data:', error);
+      console.error("Error refreshing data:", error);
     } finally {
       setRefreshing(false);
     }
@@ -621,7 +836,9 @@ export default function HomeScreen() {
 
   const hasUserReservation = (ride: Ride) => {
     return ride.Reservations?.some(
-      r => r.passenger_id === user?.id && (r.status === "PENDING" || r.status === "CONFIRMED")
+      (reservation) =>
+        (reservation as any).passenger_id === user?.id &&
+        (reservation.status === "PENDING" || reservation.status === "CONFIRMED")
     );
   };
 
@@ -632,16 +849,17 @@ export default function HomeScreen() {
       Dialog({
         visible: true,
         title: "Reserva existente",
-        message: "Você já possui uma reserva ativa ou pendente para esta corrida.",
+        message:
+          "Você já possui uma reserva ativa ou pendente para esta corrida.",
         onClose: () => {},
         type: "error",
         actions: [
           {
             label: "OK",
             variant: "primary",
-            onPress: () => {}
-          }
-        ]
+            onPress: () => {},
+          },
+        ],
       });
       return;
     }
@@ -649,27 +867,26 @@ export default function HomeScreen() {
     try {
       setIsReserving(true);
       await reservationService.create(ride.ride_id);
-      
-      // Close the ride details modal first
+
       handleCloseRideDetails();
-      
-      // Show success dialog with updated message
+
       setShowSuccessDialog(true);
     } catch (error) {
-      console.error('Error creating reservation:', error);
+      console.error("Error creating reservation:", error);
       Dialog({
         visible: true,
         title: "Erro",
-        message: "Não foi possível realizar a reserva. Tente novamente mais tarde.",
+        message:
+          "Não foi possível realizar a reserva. Tente novamente mais tarde.",
         onClose: () => {},
         type: "error",
         actions: [
           {
             label: "OK",
             variant: "primary",
-            onPress: () => {}
-          }
-        ]
+            onPress: () => {},
+          },
+        ],
       });
     } finally {
       setIsReserving(false);
@@ -692,9 +909,11 @@ export default function HomeScreen() {
         onScroll={({ nativeEvent }) => {
           const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
           if (!layoutMeasurement || !contentSize) return;
-          
-          const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
-          
+
+          const isCloseToBottom =
+            layoutMeasurement.height + contentOffset.y >=
+            contentSize.height - 20;
+
           if (isCloseToBottom) {
             handleLoadMore();
           }
@@ -709,9 +928,7 @@ export default function HomeScreen() {
           {/* Header */}
           <View style={styles.header}>
             <View>
-              <Text style={[typography.body1, styles.greeting]}>
-                Olá,
-              </Text>
+              <Text style={[typography.body1, styles.greeting]}>Olá,</Text>
               {isLoading ? (
                 <Skeleton width={150} height={32} style={{ marginTop: 4 }} />
               ) : (
@@ -726,8 +943,11 @@ export default function HomeScreen() {
               <Link href="/(app)/profile" asChild>
                 <TouchableOpacity>
                   <Image
-                    source={{ 
-                      uri: profilePicture || "https://ui-avatars.com/api/?name=" + encodeURIComponent(user?.name || 'User')
+                    source={{
+                      uri:
+                        profilePicture ||
+                        "https://ui-avatars.com/api/?name=" +
+                          encodeURIComponent(user?.name || "User"),
                     }}
                     style={styles.profilePicture}
                   />
@@ -753,7 +973,7 @@ export default function HomeScreen() {
         <View style={[styles.content, { paddingBottom: 100 }]}>
           {/* Service Options */}
           <Text style={[typography.h3, styles.sectionTitle]}>
-            Como posso te servir hoje ?
+            O que você precisa?
           </Text>
           <View style={styles.serviceOptions}>
             {serviceOptions.map(renderServiceOption)}
@@ -763,7 +983,7 @@ export default function HomeScreen() {
           <Text style={[typography.h3, styles.sectionTitle]}>
             {locationError ? "Caronas disponíveis" : "Caronas na sua região"}
           </Text>
-          
+
           <View style={styles.ridesContainer}>
             {isLoadingRides && nearbyRides.length === 0 ? (
               <>
@@ -780,11 +1000,17 @@ export default function HomeScreen() {
                 >
                   <View style={styles.rideHeader}>
                     <View style={styles.rideRoute}>
-                      <Text style={[typography.body1, styles.searchResultCity]} numberOfLines={1}>
+                      <Text
+                        style={[typography.body1, styles.searchResultCity]}
+                        numberOfLines={1}
+                      >
                         {ride.StartAddress.city}
                       </Text>
                       <IconArrowRight size={20} color={colors.neutral.gray2} />
-                      <Text style={[typography.body1, styles.searchResultCity]} numberOfLines={1}>
+                      <Text
+                        style={[typography.body1, styles.searchResultCity]}
+                        numberOfLines={1}
+                      >
                         {ride.EndAddress.city}
                       </Text>
                     </View>
@@ -794,8 +1020,11 @@ export default function HomeScreen() {
                     <View style={styles.rideDriver}>
                       <Image
                         source={{
-                          uri: driversInfo[ride.driver_id]?.photo ||
-                            `https://ui-avatars.com/api/?name=${encodeURIComponent(driversInfo[ride.driver_id]?.name || 'User')}`
+                          uri:
+                            driversInfo[ride.driver_id]?.photo ||
+                            `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                              driversInfo[ride.driver_id]?.name || "User"
+                            )}`,
                         }}
                         style={styles.driverPhoto}
                       />
@@ -804,14 +1033,22 @@ export default function HomeScreen() {
                       </Text>
                     </View>
 
-                    <Text style={[typography.body2, { color: colors.neutral.gray2, marginBottom: 12 }]}>
+                    <Text
+                      style={[
+                        typography.body2,
+                        { color: colors.neutral.gray2, marginBottom: 12 },
+                      ]}
+                    >
                       {formatDate(ride.start_time)}
                     </Text>
 
                     <View style={styles.rideDetails}>
                       <View style={styles.detailItem}>
                         <View style={styles.detailIcon}>
-                          <IconUsers size={20} color={colors.primary.normal.default} />
+                          <IconUsers
+                            size={20}
+                            color={colors.primary.normal.default}
+                          />
                         </View>
                         <Text style={[typography.body2, styles.detailText]}>
                           {calculateAvailableSeats(ride)} lugares
@@ -819,12 +1056,15 @@ export default function HomeScreen() {
                       </View>
                       <View style={styles.detailItem}>
                         <View style={styles.detailIcon}>
-                          <IconCurrencyReal size={20} color={colors.primary.normal.default} />
+                          <IconCurrencyReal
+                            size={20}
+                            color={colors.primary.normal.default}
+                          />
                         </View>
                         <Text style={[typography.body2, styles.detailText]}>
-                          {new Intl.NumberFormat('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL'
+                          {new Intl.NumberFormat("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
                           }).format(parseFloat(ride.price))}
                         </Text>
                       </View>
@@ -837,11 +1077,23 @@ export default function HomeScreen() {
                 Nenhuma carona disponível no momento.
               </Text>
             )}
-            
+
             {isLoadingRides && nearbyRides.length > 0 && (
               <View style={styles.loadingMore}>
                 <ActivityIndicator color={colors.primary.normal.default} />
               </View>
+            )}
+
+            {nearbyRides.length > 0 && (
+              <TouchableOpacity
+                style={styles.seeMoreButton}
+                onPress={() => router.push('/(app)/home/more' as any)}
+              >
+                <Text style={[typography.button, { color: colors.primary.normal.default }]}>
+                  Explorar corridas
+                </Text>
+                <IconArrowRight size={20} color={colors.primary.normal.default} />
+              </TouchableOpacity>
             )}
           </View>
 
@@ -860,7 +1112,7 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
-      <SearchModal 
+      <SearchModal
         visible={showSearchModal}
         onClose={handleCloseSearch}
         searchQuery={searchQuery}
@@ -870,7 +1122,7 @@ export default function HomeScreen() {
         onCardPress={handleRidePress}
       />
       <RideDetailsModal />
-      
+
       {showSuccessDialog && (
         <Dialog
           visible={true}
@@ -885,7 +1137,7 @@ export default function HomeScreen() {
               onPress: () => {
                 setShowSuccessDialog(false);
                 router.push("/reservations" as any);
-              }
+              },
             },
             {
               label: "OK",
@@ -893,11 +1145,11 @@ export default function HomeScreen() {
               onPress: () => {
                 setShowSuccessDialog(false);
                 loadNearbyRides(1, true);
-              }
-            }
+              },
+            },
           ]}
         />
       )}
     </SafeAreaView>
   );
-} 
+}

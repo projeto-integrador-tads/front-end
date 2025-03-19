@@ -11,15 +11,17 @@ export const styles = StyleSheet.create({
     padding: 24,
     borderBottomWidth: 1,
     borderBottomColor: colors.neutral.gray4,
-  },
-  headerTitle: {
-    color: colors.neutral.black,
-  },
-  backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
+    justifyContent: 'space-between',
+  },
+  headerTitle: {
+    flex: 1,
+    color: colors.neutral.black,
+    textAlign: 'left',
+  },
+  backButton: {
+    padding: 4,
   },
   content: {
     flex: 1,
@@ -81,6 +83,11 @@ export const styles = StyleSheet.create({
     gap: 12,
     marginTop: 8,
     width: '100%',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    backgroundColor: colors.neutral.white,
+    borderTopWidth: 1,
+    borderTopColor: colors.neutral.gray4,
   },
   actionButton: {
     width: '100%',
@@ -89,25 +96,24 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    borderRadius: 8,
+    borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 16,
   },
   startButton: {
-    backgroundColor: colors.status.success,
+    backgroundColor: colors.primary.normal.default,
   },
   endButton: {
-    backgroundColor: colors.status.success,
+    backgroundColor: colors.primary.normal.default,
   },
   cancelButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: colors.neutral.white,
     borderWidth: 1,
-    borderColor: colors.status.error,
+    borderColor: colors.neutral.gray4,
   },
   chatButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: colors.primary.normal.default,
+    backgroundColor: colors.primary.light.default,
+    borderWidth: 0,
   },
   actionBar: {
     width: '100%',

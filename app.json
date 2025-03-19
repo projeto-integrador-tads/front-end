@@ -8,15 +8,20 @@
     "userInterfaceStyle": "automatic",
     "icon": "./src/assets/images/icon.png",
     "newArchEnabled": true,
+    "developmentClient": {
+      "silentLogs": true
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "allowScreenCapture": true
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/images/logo.png",
         "backgroundColor": "#0077b6"
       },
-      "package": "com.anonymous.VemComigo"
+      "package": "com.anonymous.VemComigo",
+      "allowScreenCapture": true
     },
     "web": {
       "bundler": "metro",

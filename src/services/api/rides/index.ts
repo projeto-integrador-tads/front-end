@@ -90,7 +90,7 @@ interface PaginatedResponse<T> {
 
 interface Reservation {
   passenger_id: string;
-  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+  status: "PENDING" | "CONFIRMED" | "CANCELLED";
   Passenger: {
     name: string;
     last_name: string;
@@ -184,12 +184,12 @@ class RideService {
   async getByStartCity(
     city: string,
     page: number = 1,
-    pageSize: number = 10
+    perPage: number = 10
   ): Promise<PaginatedResponse<Ride>> {
     const response = await api.get<PaginatedResponse<Ride>>(
       RIDE_ENDPOINTS.GET_BY_START_CITY(city),
       {
-        params: { page, pageSize },
+        params: { page, perPage },
       }
     );
     return response.data;
@@ -198,12 +198,12 @@ class RideService {
   async getByDestinationCity(
     city: string,
     page: number = 1,
-    pageSize: number = 10
+    perPage: number = 10
   ): Promise<ApiResponse<Ride>> {
     const response = await api.get<ApiResponse<Ride>>(
       RIDE_ENDPOINTS.GET_BY_DESTINATION_CITY(city),
       {
-        params: { page, pageSize },
+        params: { page, perPage },
       }
     );
     return response.data;

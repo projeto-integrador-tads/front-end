@@ -16,6 +16,7 @@ export const USER_ENDPOINTS = {
   GET_PICTURE_BY_ID: (id: string) => `/users/${id}/profile-picture`,
   DELETE_PICTURE: "/users/profile-picture",
   UPDATE: "/users",
+  REPORT: "/users/report",
 } as const;
 
 export const RIDE_ENDPOINTS = {
@@ -48,6 +49,12 @@ export const RESERVATION_ENDPOINTS = {
   CANCEL: (reservation_id: string) => `/reservations/cancel/${reservation_id}`,
   CONFIRM: (reservation_id: string) =>
     `/reservations/confirm/${reservation_id}`,
+} as const;
+
+export const REVIEW_ENDPOINTS = {
+  CREATE: "/reviews",
+  UPDATE: (review_id: string) => `/reviews/${review_id}`,
+  DELETE: (review_id: string) => `/reviews/${review_id}`,
 } as const;
 
 export const MESSAGE_ENDPOINTS = {

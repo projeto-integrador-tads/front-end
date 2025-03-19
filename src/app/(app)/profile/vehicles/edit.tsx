@@ -25,11 +25,9 @@ export default function EditVehicleScreen() {
   useEffect(() => {
     const loadVehicle = async () => {
       try {
-        // Try to find the vehicle in active vehicles first
         const activeResponse = await vehicleService.getActive();
         let vehicle = activeResponse?.data?.find((v: Vehicle) => v.vehicle_id === id);
 
-        // If not found in active vehicles, try inactive vehicles
         if (!vehicle) {
           const inactiveResponse = await vehicleService.getInactive();
           vehicle = inactiveResponse?.data?.find((v: Vehicle) => v.vehicle_id === id);

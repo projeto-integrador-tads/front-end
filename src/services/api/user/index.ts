@@ -34,6 +34,87 @@ export interface ProfilePictureResponse {
   url: string;
 }
 
+export interface PersonalUserReport {
+  personalData: {
+    id: string;
+    name: string;
+    last_name: string;
+    email: string;
+    phone_number: string | null;
+    profile_picture: string | null;
+    createdAt: Date;
+    is_driver: boolean;
+    average_rating: number | null;
+  };
+  savedAddresses: {
+    id: string;
+    formattedAddress: string;
+    city: string;
+    createdAt: Date;
+  }[];
+  ridesAsDriver: {
+    ride_id: string;
+    start_time: Date;
+    end_time: Date | null;
+    price: number;
+    status: string;
+    startAddress: string;
+    endAddress: string;
+    createdAt: Date;
+  }[];
+  ridesAsPassenger: {
+    ride_id: string;
+    start_time: Date;
+    end_time: Date | null;
+    price: number;
+    status: string;
+    startAddress: string;
+    endAddress: string;
+    reservation_status: string;
+    payment_status: string;
+    createdAt: Date;
+  }[];
+  vehicles: {
+    vehicle_id: string;
+    brand: string;
+    model: string;
+    year: number;
+    license_plate: string;
+    color: string;
+    seats: number;
+    active: boolean;
+    createdAt: Date;
+  }[];
+  reviewsGiven: {
+    review_id: string;
+    ride_id: string;
+    reviewee_id: string;
+    reviewee_name: string;
+    rating: number;
+    comment: string | null;
+    createdAt: Date;
+  }[];
+  reviewsReceived: {
+    review_id: string;
+    ride_id: string;
+    reviewer_id: string;
+    reviewer_name: string;
+    rating: number;
+    comment: string | null;
+    createdAt: Date;
+  }[];
+  messages: {
+    message_id: string;
+    content: string;
+    sender_id: string;
+    sender_name: string;
+    receiver_id: string;
+    receiver_name: string;
+    ride_id: string | null;
+    createdAt: Date;
+  }[];
+}
+
 class UserService {
   async register(data: RegisterData): Promise<User> {
     const response = await api.post<User>('/register', data);
@@ -79,6 +160,15 @@ class UserService {
 
   async deleteAccount(): Promise<void> {
     await api.delete(USER_ENDPOINTS.DELETE);
+  }
+
+  async getPersonalReport(): Promise<PersonalUserReport> {
+    try {
+      const response = await api.get<PersonalUserReport>(USER_ENDPOINTS.REPORT);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 }
 

@@ -365,7 +365,7 @@ export default function ChatDetailsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.push('/chats')}>
           <IconArrowRight size={24} color={colors.neutral.black} style={{ transform: [{ rotate: '180deg' }] }} />
         </TouchableOpacity>
         <View style={styles.headerInfo}>

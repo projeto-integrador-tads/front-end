@@ -1,17 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Image, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Image, Alert, Modal, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { typography } from '@/styles/shared/typography/typography';
 import { colors } from '@/styles/shared/colors/colors';
 import { styles } from './styles';
 import { rideService, Ride } from '@/services/api/rides';
-import { IconArrowLeft, IconClock, IconCurrencyReal, IconMapPin, IconCar, IconUsers, IconMessage, IconPlayerPlay, IconPlayerStop, IconX } from '@tabler/icons-react-native';
+import { IconArrowLeft, IconClock, IconCurrencyReal, IconMapPin, IconCar, IconUsers, IconMessage, IconPlayerPlay, IconPlayerStop, IconX, IconStar, IconStarFilled } from '@tabler/icons-react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { userService } from '@/services/api/user';
 import { useUser } from '@/contexts/UserContext';
 import { reservationService, Reservation } from '@/services/api/reservations';
 import { Button } from '@/components/button/Button';
+import { reviewService } from '@/services/api/reviews';
 
 export default function RideDetailsScreen() {
   const { id } = useLocalSearchParams();
@@ -23,6 +24,11 @@ export default function RideDetailsScreen() {
   const [isLoadingDriverPhoto, setIsLoadingDriverPhoto] = useState(false);
   const [confirmedReservations, setConfirmedReservations] = useState<Reservation[]>([]);
   const [isLoadingReservations, setIsLoadingReservations] = useState(false);
+  const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState('');
+  const [revieweeId, setRevieweeId] = useState<string | null>(null);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   useEffect(() => {
     loadRideDetails();
@@ -155,6 +161,38 @@ export default function RideDetailsScreen() {
     );
   };
 
+  const handleReview = async () => {
+    if (!ride || !revieweeId) return;
+
+    try {
+      setIsSubmittingReview(true);
+      await reviewService.create({
+        ride_id: ride.ride_id,
+        rating: Math.round(rating),
+        ...(comment.trim() ? { comment: comment.trim() } : {}),
+        ...(ride.driver_id === user?.id ? { passenger_id: revieweeId } : {})
+      });
+      
+      Alert.alert(
+        "Sucesso",
+        "Avaliação enviada com sucesso!",
+        [{ text: "OK", onPress: () => {
+          setIsReviewModalVisible(false);
+          setRating(5);
+          setComment('');
+        }}]
+      );
+    } catch (error: any) {
+      Alert.alert(
+        "Erro",
+        error.response?.data?.error || "Não foi possível enviar a avaliação.",
+        [{ text: "OK" }]
+      );
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
   const calculateAvailableSeats = (ride: Ride) => {
     const pendingReservations = ride.Reservations?.filter(r => r.status === "PENDING").length || 0;
     return Math.max(0, ride.available_seats - pendingReservations);
@@ -182,7 +220,7 @@ export default function RideDetailsScreen() {
               style={[styles.actionButton, styles.cancelButton]}
               variant="outline"
             >
-              <Text style={[typography.button, { color: colors.status.error }]}>Cancelar Carona</Text>
+              <Text style={[typography.button, { color: colors.neutral.gray1 }]}>Cancelar</Text>
             </Button>
           </View>
         )}
@@ -195,6 +233,28 @@ export default function RideDetailsScreen() {
             >
               <Text style={[typography.button, { color: colors.neutral.white }]}>Finalizar Carona</Text>
             </Button>
+          </View>
+        )}
+        {ride.status === 'COMPLETED' && (
+          <View style={styles.actionButtons}>
+            {ride.Reservations?.filter(r => r.status === "CONFIRMED").map((reservation: any) => (
+              <Button
+                key={reservation.passenger_id}
+                onPress={() => {
+                  setRevieweeId(reservation.passenger_id);
+                  setIsReviewModalVisible(true);
+                }}
+                style={[styles.actionButton, {
+                  backgroundColor: colors.primary.normal.default,
+                  marginBottom: 8,
+                }]}
+                variant="default"
+              >
+                <Text style={[typography.button, { color: colors.neutral.white }]}>
+                  Avaliar {reservation.Passenger?.name}
+                </Text>
+              </Button>
+            ))}
           </View>
         )}
       </View>
@@ -253,6 +313,120 @@ export default function RideDetailsScreen() {
     </ScrollView>
   );
 
+  const renderReviewModal = () => (
+    <Modal
+      visible={isReviewModalVisible}
+      transparent
+      animationType="slide"
+      onRequestClose={() => setIsReviewModalVisible(false)}
+    >
+      <View style={{
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end',
+      }}>
+        <View style={{
+          backgroundColor: colors.neutral.white,
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+          padding: 24,
+          gap: 16,
+        }}>
+          <View style={{ alignItems: 'center' }}>
+            <Text style={[typography.h3, { color: colors.neutral.black }]}>
+              Avaliar {ride?.driver_id === user?.id ? 'Passageiro' : 'Motorista'}
+            </Text>
+          </View>
+
+          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <TouchableOpacity
+                key={star}
+                onPress={() => setRating(star)}
+                style={{
+                  padding: 4,
+                  transform: [{ scale: rating === star ? 1.2 : 1 }],
+                }}
+                activeOpacity={0.7}
+              >
+                {star <= rating ? (
+                  <IconStarFilled 
+                    size={36} 
+                    color={colors.primary.normal.default}
+                    style={{ 
+                      shadowColor: colors.primary.normal.default,
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.3,
+                      shadowRadius: 3,
+                      elevation: 3,
+                    }}
+                  />
+                ) : (
+                  <IconStar 
+                    size={36} 
+                    color={colors.neutral.gray3}
+                    style={{
+                      opacity: 0.8
+                    }}
+                  />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <TextInput
+            style={{
+              backgroundColor: colors.neutral.background,
+              borderRadius: 8,
+              padding: 12,
+              height: 100,
+              textAlignVertical: 'top',
+              ...typography.body1,
+            }}
+            placeholder="Deixe um comentário (opcional)..."
+            value={comment}
+            onChangeText={setComment}
+            multiline
+            maxLength={500}
+          />
+
+          <View style={{ gap: 8 }}>
+            <Button
+              onPress={handleReview}
+              style={{
+                backgroundColor: colors.primary.normal.default,
+                height: 48,
+                borderRadius: 8,
+              }}
+              variant="default"
+              disabled={isSubmittingReview}
+            >
+              <Text style={[typography.button, { color: colors.neutral.white }]}>
+                {isSubmittingReview ? 'Enviando...' : 'Enviar Avaliação'}
+              </Text>
+            </Button>
+            <Button
+              onPress={() => setIsReviewModalVisible(false)}
+              style={{
+                backgroundColor: colors.neutral.white,
+                height: 48,
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: colors.neutral.gray4,
+              }}
+              variant="outline"
+              disabled={isSubmittingReview}
+            >
+              <Text style={[typography.button, { color: colors.neutral.gray1 }]}>
+                Cancelar
+              </Text>
+            </Button>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
@@ -261,9 +435,9 @@ export default function RideDetailsScreen() {
           onPress={() => router.back()}
         >
           <IconArrowLeft size={24} color={colors.neutral.black} />
-          <Text style={[typography.body2, { color: colors.neutral.black }]}>Voltar</Text>
         </TouchableOpacity>
         <Text style={[typography.h3, styles.headerTitle]}>Detalhes da Carona</Text>
+        <View style={{ width: 24 }} />
       </View>
 
       {isLoading ? (
@@ -322,7 +496,7 @@ export default function RideDetailsScreen() {
                 {ride.driver_id !== user?.id && (
                   <TouchableOpacity 
                     style={styles.messageButton}
-                    onPress={() => router.push(`/chat/${ride.driver_id}` as any)}
+                    onPress={() => router.push(`/chats/${ride.ride_id}` as any)}
                   >
                     <IconMessage size={24} color={colors.primary.normal.default} />
                   </TouchableOpacity>
@@ -461,7 +635,7 @@ export default function RideDetailsScreen() {
                           </View>
                           <TouchableOpacity 
                             style={styles.messageButton}
-                            onPress={() => router.push(`/chat/${reservation.passenger_id}` as any)}
+                            onPress={() => router.push(`/chats/${ride.ride_id}` as any)}
                           >
                             <IconMessage size={20} color={colors.primary.normal.default} />
                           </TouchableOpacity>
@@ -501,6 +675,25 @@ export default function RideDetailsScreen() {
           </Text>
         </View>
       )}
+      {ride?.status === 'COMPLETED' && ride.driver_id !== user?.id && (
+        <View style={[styles.actionBar, { position: 'absolute', bottom: 0, left: 0, right: 0 }]}>
+          <Button
+            onPress={() => {
+              setRevieweeId(ride.driver_id);
+              setIsReviewModalVisible(true);
+            }}
+            style={[styles.actionButton, {
+              backgroundColor: colors.primary.normal.default,
+            }]}
+            variant="default"
+          >
+            <Text style={[typography.button, { color: colors.neutral.white }]}>
+              Avaliar Motorista
+            </Text>
+          </Button>
+        </View>
+      )}
+      {renderReviewModal()}
     </SafeAreaView>
   );
 } 

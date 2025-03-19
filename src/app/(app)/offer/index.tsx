@@ -10,6 +10,7 @@ import {
   Modal,
   Image,
   RefreshControl,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { typography } from "@/styles/shared/typography/typography";
@@ -28,10 +29,12 @@ import House from "@/assets/svgs/house";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Button } from "@/components/button/Button";
 import { IconCar, IconArrowRight, IconCurrencyDollar, IconUsers, IconLeaf } from "@tabler/icons-react-native";
+import { Dialog } from "@/components/dialog/Dialog";
 
 export default function OfferScreen() {
   const { user, updateUser } = useUser();
   const [refreshing, setRefreshing] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   const checkUserStatus = async () => {
     try {
@@ -334,8 +337,8 @@ export default function OfferScreen() {
         preferences: rideForm.preferences,
       });
 
-      if (response?.data) {
-        router.back();
+      if (response) {
+        setShowSuccessDialog(true);
       } else {
         setError("Erro ao criar carona. Tente novamente.");
       }
@@ -655,6 +658,22 @@ export default function OfferScreen() {
     </Modal>
   );
 
+  const clearForm = () => {
+    setRideForm({
+      start_location: "",
+      end_location: "",
+      start_latitude: "",
+      start_longitude: "",
+      end_latitude: "",
+      end_longitude: "",
+      start_time: new Date(),
+      price: "",
+      available_seats: "",
+      preferences: "",
+    });
+    setIsFreeRide(false);
+  };
+
   return (
     <View style={styles.container}>
       <View style={localStyles.headerSection}>
@@ -831,6 +850,17 @@ export default function OfferScreen() {
         </SafeAreaView>
       </Modal>
       {renderVehicleModal()}
+      
+      <Dialog
+        visible={showSuccessDialog}
+        title="Sucesso!"
+        message="Sua carona foi criada com sucesso."
+        type="success"
+        onClose={() => {
+          setShowSuccessDialog(false);
+          clearForm();
+        }}
+      />
     </View>
   );
 }
